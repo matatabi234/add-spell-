@@ -1,25 +1,23 @@
 package com.matatabi.add_spell.menu;
 
-import com.matatabi.add_spell.item.ModItems;
-import com.matatabi.add_spell.item.custom.SpellBookManager;
-import com.matatabi.add_spell.item.custom.slot.SpellBookContainer;
-import com.matatabi.add_spell.item.custom.slot.SpellSlot;
+import com.matatabi.add_spell.items.ModItems;
+import com.matatabi.add_spell.items.custom.slot.SpellBookContainer;
+import com.matatabi.add_spell.items.custom.slot.SpellSlot;
+import com.matatabi.add_spell.spell.SpellGrid;
+import com.matatabi.add_spell.spell.SpellNode;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import com.matatabi.add_spell.spell.SpellValidator;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 public class SpellBookMenu extends AbstractContainerMenu {
 
@@ -29,21 +27,35 @@ public class SpellBookMenu extends AbstractContainerMenu {
     public SpellBookMenu(int windowId, Inventory playerInventory, ItemStack bookStack) {
         super(ModMenus.SPELLBOOK_MENU.get(), windowId);
         this.bookStack = bookStack;
-
         this.spellContainer = new SpellBookContainer(15);
 
         loadFromItem(bookStack);
 
-        List<Item> allowedItems = List.of(ModItems.TEST_ITEM.get());
+        List<Item> allowedItems = new ArrayList<>();
+
+        allowedItems.add(ModItems.TEST_ITEM.get());
+        allowedItems.add(ModItems.AREA.get());
+        allowedItems.add(ModItems.SINGLE.get());
+
+
         int cols = 5, rows = 2, slotSize = 18;
         int startX = 43, startY = 17;
 
+        SpellGrid grid = new SpellGrid(cols, rows);
+        for (int x = 0; x < cols; x++) {
+            for (int y = 0; y < rows; y++) {
+                grid.setNode(x, y, new SpellNode(SpellNode.NodeType.EMPTY));
+            }
+        }
+
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-                int i = row * cols + col;
-                addSlot(new SpellSlot(spellContainer, i,
+                int index = row * cols + col;
+                SpellNode node = grid.getNode(col, row);
+                this.addSlot(new SpellSlot(spellContainer, index,
                         startX + col * slotSize,
                         startY + row * slotSize,
+                        node, // SpellNode を渡す
                         allowedItems));
             }
         }
@@ -74,19 +86,22 @@ public class SpellBookMenu extends AbstractContainerMenu {
             ItemStack stackInSlot = slot.getItem();
             itemstack = stackInSlot.copy();
 
-            // SpellSlot の場合は allowedItems をチェック
             if (slot instanceof SpellSlot spellSlot) {
                 if (!spellSlot.mayPlace(stackInSlot)) {
-                    return ItemStack.EMPTY; // 移動不可
+                    return ItemStack.EMPTY; // 許可されていないアイテム
                 }
+
+                // 🔹 JSON情報を SpellNode に反映
+                SpellNode node = spellSlot.getNode(); // SpellSlot に SpellNode 参照を持たせておく
+                node.setItem(stackInSlot); // setItem 内で JsonLoader が呼ばれ triggerData がセットされる
             }
 
             // プレイヤーインベントリ ↔ メニュー内スロットの移動
-            if (index < spellContainer.getContainerSize()) { // Menu側からプレイヤーへ
+            if (index < spellContainer.getContainerSize()) {
                 if (!moveItemStackTo(stackInSlot, spellContainer.getContainerSize(), this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else { // プレイヤーから Menu側へ
+            } else {
                 if (!moveItemStackTo(stackInSlot, 0, spellContainer.getContainerSize(), false)) {
                     return ItemStack.EMPTY;
                 }
@@ -108,7 +123,11 @@ public class SpellBookMenu extends AbstractContainerMenu {
     @Override
     public void removed(Player player) {
         super.removed(player);
-        saveToItem(); // GUI を閉じたら NBT 保存
+        saveToItem(); // NBT 保存
+
+        // 魔法完成チェック
+        boolean magicReady = SpellValidator.validate(spellContainer);
+        player.getPersistentData().putBoolean("MagicReady", magicReady);
     }
 
         private void loadFromItem(ItemStack stack) {
@@ -123,7 +142,10 @@ public class SpellBookMenu extends AbstractContainerMenu {
     private void saveToItem() {
         ListTag items = new ListTag();
         for (int i = 0; i < spellContainer.getContainerSize(); i++) {
-            items.add(spellContainer.getItem(i).serializeNBT());
+            ItemStack stack = spellContainer.getItem(i);
+            if (stack != null && !stack.isEmpty()) {
+                items.add(stack.serializeNBT());
+            }
         }
         bookStack.getOrCreateTag().put("SpellItems", items);
     }

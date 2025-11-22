@@ -1,4 +1,4 @@
-package com.matatabi.add_spell.item;
+package com.matatabi.add_spell.items;
 
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;

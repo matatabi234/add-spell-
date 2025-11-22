@@ -1,6 +1,6 @@
-package com.matatabi.add_spell.item.custom;
+package com.matatabi.add_spell.items.custom;
 
-import com.matatabi.add_spell.item.custom.slot.SpellBookContainer;
+import com.matatabi.add_spell.items.custom.slot.SpellBookContainer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;

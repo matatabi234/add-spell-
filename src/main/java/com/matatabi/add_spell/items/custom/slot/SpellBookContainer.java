@@ -1,8 +1,11 @@
-package com.matatabi.add_spell.item.custom.slot;
+package com.matatabi.add_spell.items.custom.slot;
 
+import com.matatabi.add_spell.menu.ModMenus;
+import com.matatabi.add_spell.spell.SpellNode;
 import net.minecraft.world.Container;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.Arrays;
 
 public class SpellBookContainer implements Container {
 
@@ -11,6 +14,10 @@ public class SpellBookContainer implements Container {
     public SpellBookContainer(int size) {
         items = new ItemStack[size];
         for (int i = 0; i < size; i++) items[i] = ItemStack.EMPTY;
+        nodes = new SpellNode[size];
+        for (int i = 0; i < size; i++) {
+            nodes[i] = new SpellNode(SpellNode.NodeType.EMPTY);
+        }
     }
 
     @Override
@@ -58,5 +65,26 @@ public class SpellBookContainer implements Container {
     @Override
     public void clearContent() {
         for (int i = 0; i < items.length; i++) items[i] = ItemStack.EMPTY;
+    }
+
+    private final SpellNode[] nodes;
+
+    public SpellNode getNode(int index) {
+        return nodes[index];
+    }
+
+    public void setNode(int index, SpellNode node) {
+        nodes[index] = node;
+    }
+
+    // 簡単な方向探索の例
+    public SpellNode getNextNode(SpellNode node, String direction) {
+        int index = Arrays.asList(nodes).indexOf(node);
+        if (direction.equals("RIGHT")) {
+            int nextIndex = index + 1;
+            if (nextIndex < nodes.length) return nodes[nextIndex];
+        }
+        // 上下も追加可能
+        return null;
     }
 }

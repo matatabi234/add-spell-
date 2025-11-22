@@ -1,7 +1,6 @@
-package com.matatabi.add_spell.item.custom;
+package com.matatabi.add_spell.items.custom;
 
 import com.matatabi.add_spell.menu.SpellBookMenu;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -12,8 +11,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
-
-import java.util.UUID;
 
 public class CommonSpellBookItem extends Item {
 
