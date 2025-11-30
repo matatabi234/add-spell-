@@ -7,6 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
+import java.util.Map;
 
 public class SpellNode {
 
@@ -26,9 +27,9 @@ public class SpellNode {
         this.itemStack = stack;
         if (type == NodeType.TRIGGER && !stack.isEmpty()) {
             // JSON から安全に取得
-            ResourceLocation key = ForgeRegistries.ITEMS.getKey(stack.getItem());
-            if (key != null) {
-                this.triggerData = JsonLoader.getTriggerData(key);
+            Item item = stack.getItem();
+            if (item != null) {
+                this.triggerData = JsonLoader.getTriggerData(item);
             }
         }
     }
@@ -40,14 +41,14 @@ public class SpellNode {
         public final String mode;
         public final int radius;
         public final int maxDistance;
-        public final List<String> connectableDirections;
+        public final Map<String, List<String>> connectable;
 
-        public TriggerData(Item item, String mode, int radius, int maxDistance, List<String> connectableDirections) {
+        public TriggerData(Item item, String mode, int radius, int maxDistance, Map<String, List<String>> connectable) {
             this.item = item;
             this.mode = mode;
             this.radius = radius;
             this.maxDistance = maxDistance;
-            this.connectableDirections = connectableDirections;
+            this.connectable = connectable;
         }
     }
 

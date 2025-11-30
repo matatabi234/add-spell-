@@ -12,49 +12,20 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import com.matatabi.add_spell.util.JsonLoader;
-
 
 public class ServerSpellHandler {
-
-
-
     public static void castSpell(ServerPlayer player) {
-        // 右手に持っているSpellBookを取得
         ItemStack book = player.getMainHandItem();
-        if (!(book.getItem() instanceof CommonSpellBookItem)) return;
-
-        // SpellBookContainerにNBTから読み込む
-        SpellBookContainer container = new SpellBookContainer(15);
         CompoundTag tag = book.getOrCreateTag();
-        ListTag items = tag.getList("SpellItems", Tag.TAG_COMPOUND);
-        for (int i = 0; i < items.size() && i < container.getContainerSize(); i++) {
-            container.setItem(i, ItemStack.of(items.getCompound(i)));
+
+        if (!tag.getBoolean("SpellValid")) {
+            player.sendSystemMessage(Component.literal("魔法構成が無効です！"));
+            return;
         }
 
-        boolean triggered = false;
-
-        // 各スロットをチェックして、発動条件アイテムを探す
-        for (int i = 0; i < container.getContainerSize(); i++) {
-            ItemStack stack = container.getItem(i);
-            if (!stack.isEmpty()) {
-                Item item = stack.getItem();
-                SpellNode.TriggerData data = JsonLoader.getTriggerData().get(item);
-                // JsonLoader で定義したトリガーデータを確認
-                if (JsonLoader.TRIGGER_DATA.containsKey(item)) {
-                    triggered = true;
-                    break;
-                }
-            }
-        }
-
-        if (triggered) {
-            // 発動成功！エフェクトを表示
-            player.level().playSound(null, player.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1f, 1f);
-            player.level().addParticle(ParticleTypes.FLAME, player.getX(), player.getY() + 1, player.getZ(), 0, 0, 0);
-            player.sendSystemMessage(Component.literal("魔法を発動しました！"));
-        } else {
-            player.sendSystemMessage(Component.literal("発動条件がありません。"));
-        }
+        // 魔法が有効な場合だけ発動
+        player.level().playSound(null, player.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1f, 1f);
+        player.sendSystemMessage(Component.literal("魔法を発動しました！"));
     }
+
 }

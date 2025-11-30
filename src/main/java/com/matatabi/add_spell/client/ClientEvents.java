@@ -9,13 +9,22 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class ClientEvents {
 
+    private static boolean wasPressed = false;
+
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
-        if (KeyBindings.CAST_SPELL_KEY != null &&
-                KeyBindings.CAST_SPELL_KEY.isDown()) {
+        if (KeyBindings.CAST_SPELL_KEY == null) return;
 
-            // クライアント側ではサーバーに通知するだけ！
+        boolean isPressed = KeyBindings.CAST_SPELL_KEY.isDown();
+
+        // 押した瞬間だけ発動
+        if (isPressed && !wasPressed) {
             SpellCastPacket.send();
         }
+
+        // 次のフレーム用に記録
+        wasPressed = isPressed;
     }
 }
+
+

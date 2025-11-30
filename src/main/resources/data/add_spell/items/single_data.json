@@ -1,0 +1,12 @@
+{
+  "item_id": "add_spell:single",
+  "mode": "SINGLE",
+  "radius": 5,
+  "MaxDistance": 10,
+  "connectable": {
+    "UP": ["*"],
+    "DOWN": ["add_spell:single","add_spell:test_item"],
+    "LEFT": [],
+    "RIGHT": ["add_spell:area"]
+  }
+}

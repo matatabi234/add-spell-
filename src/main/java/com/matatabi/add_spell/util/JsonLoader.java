@@ -25,13 +25,18 @@ public class JsonLoader {
         return TRIGGER_DATA;
     }
 
-    public static void loadAll() {
-        loadTriggerJson(new ResourceLocation("add_spell", "trigger_data"));
+//    public static void loadAll() {
+//        loadTriggerJson(new ResourceLocation("add_spell", "trigger_data"));
+//    }
+
+    public static SpellNode.TriggerData getTriggerData(Item item) {
+        return TRIGGER_DATA.get(item);
     }
 
-    private static void loadTriggerJson(ResourceLocation loc) {
+    private static void loadTriggerJson(String fileName) {
         try (InputStreamReader reader = new InputStreamReader(
-                JsonLoader.class.getClassLoader().getResourceAsStream("add_spell/items/trigger_data.json"),
+                JsonLoader.class.getClassLoader()
+                        .getResourceAsStream("data/add_spell/items/" + fileName),
                 StandardCharsets.UTF_8
         )) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
@@ -39,18 +44,21 @@ public class JsonLoader {
 
             for (JsonElement element : items) {
                 JsonObject obj = element.getAsJsonObject();
-
                 String itemName = obj.get("item").getAsString();
                 String mode = obj.get("mode").getAsString();
                 int radius = obj.get("radius").getAsInt();
                 int maxDistance = obj.get("maxDistance").getAsInt();
 
-                JsonArray dirsArray = obj.getAsJsonArray("connectableDirections");
-                List<String> dirs = new ArrayList<>();
-                for (JsonElement e : dirsArray) dirs.add(e.getAsString());
+                JsonObject connectable = obj.getAsJsonObject("connectable");
+                Map<String, List<String>> connectableMap = new HashMap<>();
+                for (String dir : connectable.keySet()) {
+                    JsonArray arr = connectable.getAsJsonArray(dir);
+                    List<String> list = new ArrayList<>();
+                    for (JsonElement e : arr) list.add(e.getAsString());
+                    connectableMap.put(dir, list);
+                }
 
                 Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemName));
-
                 if (item == null) {
                     System.out.println("アイテムが見つかりません: " + itemName);
                     continue;
@@ -61,7 +69,7 @@ public class JsonLoader {
                         mode,
                         radius,
                         maxDistance,
-                        dirs
+                        connectableMap
                 );
 
                 TRIGGER_DATA.put(item, data);
@@ -69,16 +77,11 @@ public class JsonLoader {
             }
 
         } catch (Exception e) {
-            System.err.println("Failed to load trigger JSON: " + loc);
             e.printStackTrace();
         }
     }
 
 
-    public static SpellNode.TriggerData getTriggerData(ResourceLocation key) {
-        if (key == null) return null;
-        return TRIGGER_DATA.get(key); // TRIGGER_DATA は Map<ResourceLocation, TriggerData>
-    }
 
     public static void loadTriggers(JsonObject json) {
         JsonArray items = json.getAsJsonArray("items");
